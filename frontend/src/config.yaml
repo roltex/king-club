@@ -1,0 +1,22 @@
+# Application Configuration
+app:
+  name: "Poker Tournament"
+  version: "1.0.0"
+
+# API Configuration
+api:
+  baseUrl: "http://localhost:8000/api"
+  timeout: 10000
+
+# Tournament Settings
+tournament:
+  totalTables: 6
+  seatsPerTable: 9
+  totalSeats: 54
+
+# UI Settings
+ui:
+  theme: "dark"
+  animationDuration: 300
+  toastDuration: 5000
+

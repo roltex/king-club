@@ -1,7 +1,23 @@
 import axios from 'axios'
 
-// Base URL from config
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+// Base URL - detect environment at runtime
+const getApiBaseURL = () => {
+  // Check if we're in production (Railway)
+  if (typeof window !== 'undefined' && (window.location.hostname.includes('railway.app') || window.location.hostname.includes('king-club-frontend'))) {
+    return 'https://king-club-backend.up.railway.app/api'
+  }
+  // Use environment variable if set (for build-time)
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL.endsWith('/api') ? import.meta.env.VITE_API_BASE_URL : `${import.meta.env.VITE_API_BASE_URL}/api`
+  }
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL
+  }
+  // Fallback to localhost for development
+  return 'http://localhost:8000/api'
+}
+
+const API_BASE_URL = getApiBaseURL()
 
 const api = axios.create({
   baseURL: API_BASE_URL,

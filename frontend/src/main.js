@@ -5,8 +5,22 @@ import App from './App.vue'
 import './style.css'
 import axios from 'axios'
 
-// Configure axios
-axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
+// Configure axios - detect environment and use appropriate API URL
+const getApiBaseURL = () => {
+  // Check if we're in production (Railway)
+  if (window.location.hostname.includes('railway.app') || window.location.hostname.includes('king-club-frontend')) {
+    return 'https://king-club-backend.up.railway.app'
+  }
+  // Use environment variable if set (for build-time)
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL
+  }
+  // Fallback to localhost for development
+  return 'http://127.0.0.1:8000'
+}
+
+axios.defaults.baseURL = getApiBaseURL()
+console.log('API Base URL:', axios.defaults.baseURL)
 axios.defaults.headers.common['Content-Type'] = 'application/json'
 axios.defaults.headers.common['Accept'] = 'application/json'
 

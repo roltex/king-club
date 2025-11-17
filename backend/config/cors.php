@@ -15,6 +15,7 @@ return [
     'allowed_origins' => [
         'http://localhost:5173',
         'http://localhost:3000',
+        'https://king-club-frontend.up.railway.app',
         env('FRONTEND_URL', 'http://localhost:5173'),
     ],
 

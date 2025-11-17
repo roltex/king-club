@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\RegistrationController;
 use App\Http\Controllers\Api\StatisticsController;
 use App\Http\Controllers\Api\TournamentController;
+use App\Http\Controllers\Api\CashGameSeatController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -63,6 +64,26 @@ Route::middleware(['throttle:api'])->group(function () {
     Route::get('/registration/tables', [RegistrationController::class, 'tableLayout']);
     Route::get('/registration/waiting-list', [RegistrationController::class, 'waitingList']);
     
+    // Admin routes (for Filament dashboard)
+    Route::put('/registration/{id}/seat', [RegistrationController::class, 'updateSeat']);
+    Route::put('/registration/{id}/status', [RegistrationController::class, 'updateStatus']);
+    Route::put('/registration/{id}/move-from-waiting', [RegistrationController::class, 'moveFromWaitingList']);
+    
+    // Cash Game routes (PUBLIC)
+    Route::get('/cash-games', [\App\Http\Controllers\Api\CashGameController::class, 'index']);
+    Route::get('/cash-games/featured', [\App\Http\Controllers\Api\CashGameController::class, 'featured']);
+    Route::get('/cash-games/active', [\App\Http\Controllers\Api\CashGameController::class, 'active']);
+    Route::get('/cash-games/{id}', [\App\Http\Controllers\Api\CashGameController::class, 'show']);
+    Route::get('/cash-games/{id}/tables', [\App\Http\Controllers\Api\CashGameController::class, 'tables']);
+    Route::get('/cash-games/{id}/waiting-list', [\App\Http\Controllers\Api\CashGameController::class, 'waitingList']);
+    
+    // Cash Game Seat routes (for Filament dashboard)
+    Route::get('/cash-game-seats', [CashGameSeatController::class, 'index']);
+    Route::get('/cash-game/registrations', [\App\Http\Controllers\Api\CashGameRegistrationController::class, 'index']);
+    Route::put('/cash-game-seat/{id}/seat', [CashGameSeatController::class, 'updateSeat']);
+    Route::put('/cash-game-seat/{id}/status', [CashGameSeatController::class, 'updateStatus']);
+    Route::put('/cash-game-seat/{id}/move-from-waiting', [CashGameSeatController::class, 'moveFromWaitingList']);
+    
     // Protected routes (REQUIRE AUTHENTICATION)
     Route::middleware('auth:sanctum')->group(function () {
         // Player profile routes
@@ -75,6 +96,11 @@ Route::middleware(['throttle:api'])->group(function () {
         // Tournament registration (REQUIRES LOGIN)
         Route::post('/register', [RegistrationController::class, 'register']);
         Route::post('/registration/{id}/cancel', [RegistrationController::class, 'cancel']);
+        
+        // Cash game registration (REQUIRES LOGIN)
+        Route::post('/cash-game/register', [\App\Http\Controllers\Api\CashGameRegistrationController::class, 'register']);
+        Route::post('/cash-game-seat/{id}/leave', [\App\Http\Controllers\Api\CashGameRegistrationController::class, 'leave']);
+        Route::get('/cash-game/my-seats', [\App\Http\Controllers\Api\CashGameRegistrationController::class, 'mySeats']);
     });
     
     // Legacy routes (DEPRECATED - kept for backwards compatibility)

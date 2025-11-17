@@ -54,6 +54,24 @@ class Player extends Authenticatable
     }
 
     /**
+     * Get the cash game seats for this player
+     */
+    public function cashGameSeats()
+    {
+        return $this->hasMany(CashGameSeat::class);
+    }
+
+    /**
+     * Get active cash game seats
+     */
+    public function activeCashGameSeats()
+    {
+        return $this->cashGameSeats()
+            ->whereIn('status', ['seated', 'playing', 'away'])
+            ->with('cashGame');
+    }
+
+    /**
      * Get full name attribute
      */
     public function getFullNameAttribute(): string

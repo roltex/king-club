@@ -1,13 +1,13 @@
 <template>
   <router-link
-    :to="`/tournament/${tournament.id}`"
+    :to="`/cash-game/${cashGame.id}`"
     class="tournament-card block"
   >
-    <!-- Tournament Image -->
+    <!-- Cash Game Image -->
     <div class="relative h-48 overflow-hidden">
       <img
-        :src="tournament.image_url_full || '/images/tournament-default.png'"
-        :alt="tournament.name"
+        :src="cashGame.image_url_full || '/images/tournament-default.png'"
+        :alt="cashGame.name"
         class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
         @error="handleImageError"
       />
@@ -30,47 +30,47 @@
         </span>
       </div>
 
-      <!-- Prize Pool -->
+      <!-- Stakes Display -->
       <div class="absolute bottom-3 left-3 right-3">
         <div class="flex items-center gap-2 bg-slate-900/80 backdrop-blur-sm rounded-lg px-3 py-2 border border-slate-800">
-          <Trophy :size="18" class="text-amber-400" />
-          <span class="text-lg font-bold text-white">₾{{ formatNumber(tournament.guaranteed_prize_pool || 0) }}</span>
-          <span class="text-slate-400 text-sm ml-auto">Prize Pool</span>
+          <DollarSign :size="18" class="text-emerald-400" />
+          <span class="text-lg font-bold text-white">{{ cashGame.stakes_display }}</span>
+          <span class="text-slate-400 text-sm ml-auto">Stakes</span>
         </div>
       </div>
     </div>
 
     <!-- Card Content -->
     <div class="p-6">
-      <!-- Tournament Name -->
+      <!-- Cash Game Name -->
       <h3 class="text-xl font-bold text-white mb-3 line-clamp-2 group-hover:text-emerald-400 transition-colors">
-        {{ tournament.name }}
+        {{ cashGame.name }}
       </h3>
 
       <!-- Details Grid -->
       <div class="space-y-2.5 mb-4">
-        <!-- Tournament Type -->
+        <!-- Table Number -->
         <div class="flex items-center gap-2 text-slate-300 text-sm">
-          <Trophy :size="16" class="text-amber-400 flex-shrink-0" />
-          <span>{{ formatType(tournament.tournament_type) }}</span>
-        </div>
-
-        <!-- Date -->
-        <div class="flex items-center gap-2 text-slate-300 text-sm">
-          <Calendar :size="16" class="text-emerald-400 flex-shrink-0" />
-          <span>{{ formatDate(tournament.start_date) }}</span>
-        </div>
-
-        <!-- Location -->
-        <div v-if="tournament.venue_name" class="flex items-center gap-2 text-slate-300 text-sm">
-          <MapPin :size="16" class="text-emerald-400 flex-shrink-0" />
-          <span class="truncate">{{ tournament.venue_name }}</span>
+          <Users :size="16" class="text-emerald-400 flex-shrink-0" />
+          <span>Table {{ cashGame.table_number }}</span>
         </div>
 
         <!-- Game Type -->
         <div class="flex items-center gap-2 text-slate-300 text-sm">
           <Sparkles :size="16" class="text-emerald-400 flex-shrink-0" />
-          <span>{{ formatGameType(tournament.game_type) }}</span>
+          <span>{{ formatGameType(cashGame.game_type) }}</span>
+        </div>
+
+        <!-- Location -->
+        <div v-if="cashGame.venue_name" class="flex items-center gap-2 text-slate-300 text-sm">
+          <MapPin :size="16" class="text-emerald-400 flex-shrink-0" />
+          <span class="truncate">{{ cashGame.venue_name }}</span>
+        </div>
+
+        <!-- Buy-in Range -->
+        <div class="flex items-center gap-2 text-slate-300 text-sm">
+          <DollarSign :size="16" class="text-emerald-400 flex-shrink-0" />
+          <span>₾{{ formatNumber(cashGame.min_buy_in) }} - ₾{{ formatNumber(cashGame.max_buy_in) }}</span>
         </div>
       </div>
 
@@ -78,16 +78,16 @@
       <div class="grid grid-cols-3 gap-2 mb-4">
         <div class="bg-slate-800 rounded-lg p-2 text-center">
           <div class="text-xs text-slate-400 mb-0.5">Buy-in</div>
-          <div class="text-sm font-bold text-white">₾{{ tournament.buy_in }}</div>
+          <div class="text-sm font-bold text-white">₾{{ formatNumber(cashGame.default_buy_in || cashGame.min_buy_in) }}</div>
         </div>
         <div class="bg-slate-800 rounded-lg p-2 text-center">
           <div class="text-xs text-slate-400 mb-0.5">Players</div>
-          <div class="text-sm font-bold text-white">{{ tournament.total_seats }}</div>
+          <div class="text-sm font-bold text-white">{{ cashGame.active_seats_count || 0 }}</div>
         </div>
         <div class="bg-slate-800 rounded-lg p-2 text-center">
           <div class="text-xs text-slate-400 mb-0.5">Seats</div>
           <div class="text-sm font-bold" :class="seatsColor">
-            {{ tournament.occupied_seats || 0 }}
+            {{ cashGame.available_seats || 0 }}
           </div>
         </div>
       </div>
@@ -95,7 +95,7 @@
       <!-- Progress Bar -->
       <div class="mb-4">
         <div class="flex items-center justify-between text-xs text-slate-400 mb-1.5">
-          <span>Registration Progress</span>
+          <span>Fill Rate</span>
           <span class="font-semibold">{{ fillPercentage }}%</span>
         </div>
         <div class="progress-bar">
@@ -107,11 +107,11 @@
       <button
         class="w-full py-2.5 text-sm font-semibold flex items-center justify-center gap-2"
         :class="{
-          'btn-primary': canRegister && !isUserRegistered,
-          'bg-emerald-600 text-white hover:bg-emerald-700': isUserRegistered,
-          'opacity-50 cursor-not-allowed': !canRegister && !isUserRegistered
+          'btn-primary': canJoin && !isUserSeated,
+          'bg-emerald-600 text-white hover:bg-emerald-700': isUserSeated,
+          'opacity-50 cursor-not-allowed': !canJoin && !isUserSeated
         }"
-        :disabled="!canRegister && !isUserRegistered"
+        :disabled="!canJoin && !isUserSeated"
       >
         <component :is="buttonIcon" :size="18" />
         <span>{{ buttonText }}</span>
@@ -123,11 +123,11 @@
 <script setup>
 import { computed } from 'vue'
 import {
-  Trophy, Calendar, MapPin, Sparkles, Star, CheckCircle, Users, XCircle
+  DollarSign, MapPin, Sparkles, Star, CheckCircle, Users, XCircle
 } from 'lucide-vue-next'
 
 const props = defineProps({
-  tournament: {
+  cashGame: {
     type: Object,
     required: true
   },
@@ -138,13 +138,12 @@ const props = defineProps({
 })
 
 const statusClass = computed(() => {
-  switch (props.tournament.registration_status) {
+  switch (props.cashGame.status) {
     case 'open':
+    case 'active':
       return 'badge-success'
-    case 'closing_soon':
-      return 'badge-warning'
-    case 'full':
-      return 'badge-error'
+    case 'running':
+      return 'badge-info'
     case 'closed':
       return 'bg-slate-700 text-slate-400 border-slate-600'
     default:
@@ -153,24 +152,22 @@ const statusClass = computed(() => {
 })
 
 const statusText = computed(() => {
-  switch (props.tournament.registration_status) {
+  switch (props.cashGame.status) {
     case 'open':
       return 'Open'
-    case 'closing_soon':
-      return 'Closing Soon'
-    case 'full':
-      return 'Full'
+    case 'active':
+      return 'Active'
+    case 'running':
+      return 'Running'
     case 'closed':
       return 'Closed'
     default:
-      return props.tournament.status || 'Upcoming'
+      return props.cashGame.status || 'Available'
   }
 })
 
 const fillPercentage = computed(() => {
-  const occupied = props.tournament.occupied_seats || 0
-  const total = props.tournament.total_seats || 1
-  return Math.min(100, Math.round((occupied / total) * 100))
+  return props.cashGame.fill_percentage || 0
 })
 
 const progressColor = computed(() => {
@@ -187,69 +184,49 @@ const seatsColor = computed(() => {
   return 'text-emerald-400'
 })
 
-const isUserRegistered = computed(() => {
-  return props.tournament.user_is_registered > 0
+const isUserSeated = computed(() => {
+  return props.cashGame.user_is_seated > 0
 })
 
-const canRegister = computed(() => {
-  // If user is already registered, can't register again
-  if (isUserRegistered.value) return false
+const canJoin = computed(() => {
+  // If user is already seated, can't join again
+  if (isUserSeated.value) return false
   
-  // If registration is open or closing soon, allow registration
-  if (props.tournament.registration_status === 'open' || 
-      props.tournament.registration_status === 'closing_soon') {
+  // If cash game is open/active/running, allow joining
+  if (['open', 'active', 'running'].includes(props.cashGame.status)) {
     return true
-  }
-  
-  // If tournament is full, allow registration only if waiting list is enabled
-  if (props.tournament.registration_status === 'full') {
-    return props.tournament.waiting_list_enabled === true
   }
   
   return false
 })
 
-const isWaitingListRegistration = computed(() => {
-  return props.tournament.registration_status === 'full' && 
-         props.tournament.waiting_list_enabled === true
-})
-
 const buttonText = computed(() => {
-  // If user is registered, show registered status
-  if (isUserRegistered.value) return 'You\'re Registered!'
+  // If user is seated, show seated status
+  if (isUserSeated.value) {
+    if (props.cashGame.user_seat?.status === 'waiting') {
+      return `Waiting #${props.cashGame.user_seat.waiting_position}`
+    }
+    return 'You\'re Seated!'
+  }
   
-  if (isWaitingListRegistration.value) return 'Join Waiting List'
-  if (props.tournament.registration_status === 'full') return 'Tournament Full'
-  if (props.tournament.registration_status === 'closed') return 'Registration Closed'
-  return 'View & Register'
+  if (props.cashGame.status === 'closed') return 'Closed'
+  if (fillPercentage.value >= 100) {
+    return props.cashGame.enable_waiting_list ? 'Join Waiting List' : 'Full'
+  }
+  return 'Join Now'
 })
 
 const buttonIcon = computed(() => {
-  // If user is registered, show check icon
-  if (isUserRegistered.value) return CheckCircle
+  // If user is seated, show check icon
+  if (isUserSeated.value) return CheckCircle
   
-  if (props.tournament.registration_status === 'full') return Users
-  if (props.tournament.registration_status === 'closed') return XCircle
+  if (props.cashGame.status === 'closed') return XCircle
+  if (fillPercentage.value >= 100 && props.cashGame.enable_waiting_list) return Users
   return CheckCircle
 })
 
-const formatDate = (dateString) => {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
-
-const formatType = (type) => {
-  return type?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Tournament'
-}
-
 const formatGameType = (gameType) => {
-  return gameType?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Poker'
+  return gameType?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Cash Game'
 }
 
 const formatNumber = (num) => {
@@ -260,3 +237,4 @@ const handleImageError = (event) => {
   event.target.src = '/images/tournament-default.png'
 }
 </script>
+

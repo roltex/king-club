@@ -38,6 +38,35 @@ const routes = [
     props: true,
     meta: { title: 'Tournament Details' }
   },
+  {
+    path: '/tournament/:id/tables',
+    name: 'TournamentTables',
+    component: () => import('../views/TournamentTablesView.vue'),
+    props: true,
+    meta: { title: 'Tournament Tables' }
+  },
+
+  // Cash Game Routes
+  {
+    path: '/cash-games',
+    name: 'CashGames',
+    component: () => import('../views/CashGamesListPage.vue'),
+    meta: { title: 'Browse Cash Games' }
+  },
+  {
+    path: '/cash-game/:id',
+    name: 'CashGameDetail',
+    component: () => import('../views/CashGameDetailPage.vue'),
+    props: true,
+    meta: { title: 'Cash Game Details' }
+  },
+  {
+    path: '/cash-game/:id/tables',
+    name: 'CashGameTables',
+    component: () => import('../views/CashGameTablesView.vue'),
+    props: true,
+    meta: { title: 'Cash Game Tables' }
+  },
 
   // Player Profile Routes (Protected)
   {
@@ -64,6 +93,12 @@ const routes = [
     component: () => import('../views/MyTournamentsPage.vue'),
     meta: { title: 'My Tournaments', requiresAuth: true }
   },
+  {
+    path: '/my-cash-games',
+    name: 'MyCashGames',
+    component: () => import('../views/MyCashGamesPage.vue'),
+    meta: { title: 'My Cash Games', requiresAuth: true }
+  },
 
   // Registration/Confirmation Routes
   {
@@ -72,6 +107,13 @@ const routes = [
     component: () => import('../views/RegisterTournamentPage.vue'),
     props: true,
     meta: { title: 'Register for Tournament', requiresAuth: true }
+  },
+  {
+    path: '/register-cash-game/:cashGameId',
+    name: 'RegisterCashGame',
+    component: () => import('../views/RegisterCashGamePage.vue'),
+    props: true,
+    meta: { title: 'Join Cash Game', requiresAuth: true }
   },
   {
     path: '/confirmation/:id',
@@ -102,6 +144,20 @@ const routes = [
     component: () => import('../views/TablesPage.vue'),
     props: true,
     meta: { title: 'Table Layout' }
+  },
+
+  // About & Contact Routes
+  {
+    path: '/about',
+    name: 'About',
+    component: () => import('../views/AboutPage.vue'),
+    meta: { title: 'About Us' }
+  },
+  {
+    path: '/contact',
+    name: 'Contact',
+    component: () => import('../views/ContactPage.vue'),
+    meta: { title: 'Contact Us' }
   },
 
   // Legacy Routes (for backward compatibility)

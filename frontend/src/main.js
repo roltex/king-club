@@ -9,14 +9,15 @@ import axios from 'axios'
 const getApiBaseURL = () => {
   // Check if we're in production (Railway)
   if (window.location.hostname.includes('railway.app') || window.location.hostname.includes('king-club-frontend')) {
-    return 'https://king-club-backend.up.railway.app'
+    return 'https://king-club-backend.up.railway.app/api'
   }
   // Use environment variable if set (for build-time)
   if (import.meta.env.VITE_API_BASE_URL) {
-    return import.meta.env.VITE_API_BASE_URL
+    const baseUrl = import.meta.env.VITE_API_BASE_URL
+    return baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`
   }
   // Fallback to localhost for development
-  return 'http://127.0.0.1:8000'
+  return 'http://127.0.0.1:8000/api'
 }
 
 axios.defaults.baseURL = getApiBaseURL()

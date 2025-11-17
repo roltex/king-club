@@ -75,6 +75,13 @@
                   <span>My Tournaments</span>
                 </router-link>
                 <router-link
+                  to="/my-cash-games"
+                  class="flex items-center gap-3 px-4 py-3 hover:bg-slate-800 transition-colors text-slate-300 hover:text-white"
+                >
+                  <DollarSign :size="18" />
+                  <span>My Cash Games</span>
+                </router-link>
+                <router-link
                   to="/profile/edit"
                   class="flex items-center gap-3 px-4 py-3 hover:bg-slate-800 transition-colors text-slate-300 hover:text-white"
                 >
@@ -164,6 +171,14 @@
               <span>My Tournaments</span>
             </router-link>
             <router-link
+              to="/my-cash-games"
+              @click="mobileMenuOpen = false"
+              class="nav-link-mobile"
+            >
+              <DollarSign :size="20" />
+              <span>My Cash Games</span>
+            </router-link>
+            <router-link
               to="/profile/edit"
               @click="mobileMenuOpen = false"
               class="nav-link-mobile"
@@ -190,8 +205,8 @@ import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { 
-  Home, Trophy, User, LogIn, UserPlus, LogOut, Settings, History, 
-  Menu, X, Spade, ChevronDown 
+  Home, Trophy, DollarSign, User, LogIn, UserPlus, LogOut, Settings, History, 
+  Menu, X, Spade, ChevronDown, Info, Mail 
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -202,7 +217,10 @@ const userMenuOpen = ref(false)
 
 const navLinks = computed(() => [
   { path: '/', label: 'Home', icon: Home },
+  { path: '/about', label: 'About', icon: Info },
   { path: '/tournaments', label: 'Tournaments', icon: Trophy },
+  { path: '/cash-games', label: 'Cash Games', icon: DollarSign },
+  { path: '/contact', label: 'Contact', icon: Mail },
 ])
 
 const isActive = (path) => {

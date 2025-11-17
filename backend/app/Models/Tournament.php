@@ -113,6 +113,7 @@ class Tournament extends Model
         'days_until_start',
         'image_url_full',
         'banner_url_full',
+        'guaranteed_prize_pool',
     ];
 
     // Relationships
@@ -375,5 +376,23 @@ class Tournament extends Model
     {
         $prize = $this->guaranteed_prize ?? $this->actual_prize_pool;
         return number_format($prize, 2);
+    }
+
+    public function getGuaranteedPrizePoolAttribute()
+    {
+        // Return guaranteed prize if set and > 0, otherwise return actual prize pool if > 0
+        // If both are null or 0, return 0
+        $guaranteed = $this->attributes['guaranteed_prize'] ?? null;
+        $actual = $this->attributes['actual_prize_pool'] ?? null;
+        
+        if ($guaranteed && (float)$guaranteed > 0) {
+            return (float)$guaranteed;
+        }
+        
+        if ($actual && (float)$actual > 0) {
+            return (float)$actual;
+        }
+        
+        return 0;
     }
 }

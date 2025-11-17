@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tournament;
+use App\Models\CashGame;
 use App\Models\Player;
 use App\Models\Registration;
+use App\Models\CashGameSeat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
@@ -48,12 +50,39 @@ class StatisticsController extends Controller
             $activeRegistrations = Registration::whereIn('status', ['registered', 'checked_in', 'waiting'])
                 ->count();
 
+            // Cash Game Statistics
+            $totalCashGames = CashGame::where('is_published', true)->count();
+            
+            // Active cash games (status: active, full, or not closed/cancelled/maintenance)
+            $activeCashGames = CashGame::where('is_published', true)
+                ->whereIn('status', ['active', 'full'])
+                ->count();
+            
+            $totalCashGamePlayers = CashGameSeat::whereIn('status', ['seated', 'playing', 'away'])
+                ->count();
+            
+            // Calculate total pot from all active players' current stacks
+            // This is more accurate than using the total_pot field which may not be updated
+            $totalCashGamePot = CashGameSeat::whereIn('status', ['seated', 'playing', 'away'])
+                ->sum('current_stack');
+
             return response()->json([
+                // Tournament Stats
                 'total_tournaments' => $totalTournaments,
                 'open_now' => $openTournaments,
                 'total_players' => $totalPlayers,
                 'active_registrations' => $activeRegistrations,
                 'total_prize_pool' => $totalPrizePool,
+                
+                // Cash Game Stats
+                'total_cash_games' => $totalCashGames,
+                'active_cash_games' => $activeCashGames,
+                'total_cash_game_players' => $totalCashGamePlayers,
+                'total_cash_game_pot' => $totalCashGamePot,
+                
+                // Combined Stats
+                'total_events' => $totalTournaments + $totalCashGames,
+                'total_active_events' => $openTournaments + $activeCashGames,
             ]);
         });
     }

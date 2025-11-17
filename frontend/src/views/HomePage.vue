@@ -38,48 +38,111 @@
       </div>
     </section>
 
-    <!-- Stats Section -->
+    <!-- Stats Section with Tabs -->
     <section class="page-container py-12">
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="stat-card text-center">
-          <div class="text-4xl md:text-5xl font-black text-emerald-400 mb-2">{{ stats.total }}+</div>
-          <div class="text-slate-400 font-medium">Tournaments</div>
+      <div class="card p-0 overflow-hidden">
+        <!-- Tabs Header -->
+        <div class="flex border-b border-slate-800">
+          <button
+            @click="activeStatsTab = 'tournaments'"
+            :class="activeStatsTab === 'tournaments' 
+              ? 'flex-1 px-6 py-4 text-base font-bold text-emerald-400 bg-emerald-900/20 border-b-2 border-emerald-500 transition-all' 
+              : 'flex-1 px-6 py-4 text-base font-semibold text-slate-400 hover:text-slate-300 hover:bg-slate-900/30 transition-all'"
+          >
+            <div class="flex items-center justify-center gap-2">
+              <Trophy :size="20" />
+              <span>Tournament Statistics</span>
+            </div>
+          </button>
+          <button
+            @click="activeStatsTab = 'cashgames'"
+            :class="activeStatsTab === 'cashgames' 
+              ? 'flex-1 px-6 py-4 text-base font-bold text-emerald-400 bg-emerald-900/20 border-b-2 border-emerald-500 transition-all' 
+              : 'flex-1 px-6 py-4 text-base font-semibold text-slate-400 hover:text-slate-300 hover:bg-slate-900/30 transition-all'"
+          >
+            <div class="flex items-center justify-center gap-2">
+              <DollarSign :size="20" />
+              <span>Cash Game Statistics</span>
+            </div>
+          </button>
         </div>
-        <div class="stat-card text-center">
-          <div class="text-4xl md:text-5xl font-black text-amber-400 mb-2">{{ stats.open }}</div>
-          <div class="text-slate-400 font-medium">Open Now</div>
-        </div>
-        <div class="stat-card text-center">
-          <div class="text-4xl md:text-5xl font-black text-blue-400 mb-2">{{ stats.players }}+</div>
-          <div class="text-slate-400 font-medium">Players</div>
-        </div>
-        <div class="stat-card text-center">
-          <div class="text-4xl md:text-5xl font-black text-yellow-400 mb-2">₾{{ formatNumber(stats.prize) }}</div>
-          <div class="text-slate-400 font-medium">Prize Pool</div>
+
+        <!-- Tab Content -->
+        <div class="p-6">
+          <!-- Tournament Stats Tab -->
+          <div v-if="activeStatsTab === 'tournaments'" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="stat-card text-center">
+              <div class="text-4xl md:text-5xl font-black text-emerald-400 mb-2">{{ stats.total_tournaments || 0 }}+</div>
+              <div class="text-slate-400 font-medium">Tournaments</div>
+            </div>
+            <div class="stat-card text-center">
+              <div class="text-4xl md:text-5xl font-black text-amber-400 mb-2">{{ stats.open_tournaments || 0 }}</div>
+              <div class="text-slate-400 font-medium">Open Now</div>
+            </div>
+            <div class="stat-card text-center">
+              <div class="text-4xl md:text-5xl font-black text-blue-400 mb-2">{{ stats.active_registrations || 0 }}+</div>
+              <div class="text-slate-400 font-medium">Registered</div>
+            </div>
+            <div class="stat-card text-center">
+              <div class="text-4xl md:text-5xl font-black text-yellow-400 mb-2">₾{{ formatNumber(stats.total_prize_pool || 0) }}</div>
+              <div class="text-slate-400 font-medium">Prize Pool</div>
+            </div>
+          </div>
+
+          <!-- Cash Game Stats Tab -->
+          <div v-if="activeStatsTab === 'cashgames'" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="stat-card text-center">
+              <div class="text-4xl md:text-5xl font-black text-emerald-400 mb-2">{{ stats.total_cash_games || 0 }}+</div>
+              <div class="text-slate-400 font-medium">Cash Games</div>
+            </div>
+            <div class="stat-card text-center">
+              <div class="text-4xl md:text-5xl font-black text-amber-400 mb-2">{{ stats.active_cash_games || 0 }}</div>
+              <div class="text-slate-400 font-medium">Active Now</div>
+            </div>
+            <div class="stat-card text-center">
+              <div class="text-4xl md:text-5xl font-black text-blue-400 mb-2">{{ stats.total_cash_game_players || 0 }}+</div>
+              <div class="text-slate-400 font-medium">Players</div>
+            </div>
+            <div class="stat-card text-center">
+              <div class="text-4xl md:text-5xl font-black text-yellow-400 mb-2">₾{{ formatNumber(stats.total_cash_game_pot || 0) }}</div>
+              <div class="text-slate-400 font-medium">Total Pot</div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- Featured Tournaments -->
-    <section v-if="featuredTournaments.length > 0" class="page-container py-12">
-      <div class="flex items-center justify-between mb-8">
-        <div>
-          <h2 class="section-title mb-2">Featured Tournaments</h2>
-          <p class="text-slate-400">Premium events with guaranteed prize pools</p>
-        </div>
-        <router-link to="/tournaments" class="hidden md:flex items-center gap-2 text-emerald-400 hover:text-emerald-300 font-semibold transition-colors">
-          <span>View All</span>
-          <ArrowRight :size="20" />
-        </router-link>
+    <!-- Active Cash Games -->
+    <section class="page-container py-12">
+      <div class="mb-8">
+        <h2 class="section-title mb-2">Active Cash Games</h2>
+        <p class="text-slate-400">Join live cash game tables and play now</p>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <TournamentCard
-          v-for="tournament in featuredTournaments"
-          :key="tournament.id"
-          :tournament="tournament"
-          :featured="true"
+      <div v-if="isLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <SkeletonCard v-for="i in 6" :key="i" />
+      </div>
+
+      <div v-else-if="activeCashGames.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <CashGameCard
+          v-for="cashGame in activeCashGames"
+          :key="cashGame.id"
+          :cash-game="cashGame"
         />
+      </div>
+
+      <div v-else class="text-center py-16">
+        <DollarSign :size="64" class="text-slate-700 mx-auto mb-4" />
+        <h3 class="text-2xl font-bold text-white mb-2">No Active Cash Games</h3>
+        <p class="text-slate-400 mb-6">Check back soon for new cash game tables!</p>
+      </div>
+
+      <div v-if="activeCashGames.length > 0" class="text-center mt-12">
+        <router-link to="/cash-games" class="btn-primary px-8 py-3 inline-flex items-center gap-2">
+          <DollarSign :size="20" />
+          <span>View All Cash Games</span>
+          <ArrowRight :size="20" />
+        </router-link>
       </div>
     </section>
 
@@ -176,6 +239,10 @@
             <Trophy :size="24" />
             <span>Browse Tournaments</span>
           </router-link>
+          <router-link to="/cash-games" class="btn-secondary text-lg px-8 py-4 inline-flex items-center gap-2">
+            <DollarSign :size="24" />
+            <span>Browse Cash Games</span>
+          </router-link>
         </div>
       </div>
     </section>
@@ -186,25 +253,37 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useTournamentsStore } from '../stores/tournaments'
+import { useCashGamesStore } from '../stores/cashGames'
 import TournamentCard from '../components/TournamentCard.vue'
+import CashGameCard from '../components/CashGameCard.vue'
 import SkeletonCard from '../components/SkeletonCard.vue'
 import {
-  Trophy, Calendar, ArrowRight, UserPlus, Search, CheckCircle2
+  Trophy, DollarSign, Calendar, ArrowRight, UserPlus, Search, CheckCircle2
 } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
 const tournamentsStore = useTournamentsStore()
+const cashGamesStore = useCashGamesStore()
 
 const isLoading = ref(true)
+const activeStatsTab = ref('tournaments')
 
-const featuredTournaments = computed(() => tournamentsStore.featuredTournaments.slice(0, 3))
 const upcomingTournaments = computed(() => tournamentsStore.upcomingTournaments.slice(0, 6))
+const activeCashGames = computed(() => cashGamesStore.activeCashGames.slice(0, 6))
 
 const stats = ref({
-  total: 0,
-  open: 0,
-  players: 0,
-  prize: 0
+  // Tournament Stats
+  total_tournaments: 0,
+  open_tournaments: 0,
+  active_registrations: 0,
+  total_prize_pool: 0,
+  // Cash Game Stats
+  total_cash_games: 0,
+  active_cash_games: 0,
+  total_cash_game_players: 0,
+  total_cash_game_pot: 0,
+  // Combined
+  total_players: 0,
 })
 
 const formatNumber = (num) => {
@@ -217,10 +296,18 @@ const fetchStatistics = async () => {
     const response = await axios.get('/statistics')
     
     stats.value = {
-      total: response.data.total_tournaments,
-      open: response.data.open_now,
-      players: response.data.total_players,
-      prize: response.data.total_prize_pool
+      // Tournament Stats
+      total_tournaments: response.data.total_tournaments || 0,
+      open_tournaments: response.data.open_now || 0,
+      active_registrations: response.data.active_registrations || 0,
+      total_prize_pool: response.data.total_prize_pool || 0,
+      // Cash Game Stats
+      total_cash_games: response.data.total_cash_games || 0,
+      active_cash_games: response.data.active_cash_games || 0,
+      total_cash_game_players: response.data.total_cash_game_players || 0,
+      total_cash_game_pot: response.data.total_cash_game_pot || 0,
+      // Combined
+      total_players: response.data.total_players || 0,
     }
   } catch (error) {
     console.error('Failed to load statistics:', error)
@@ -231,8 +318,8 @@ onMounted(async () => {
   try {
     await Promise.all([
       fetchStatistics(),
-      tournamentsStore.fetchFeaturedTournaments(),
-      tournamentsStore.fetchUpcomingTournaments()
+      tournamentsStore.fetchUpcomingTournaments(),
+      cashGamesStore.fetchActiveCashGames()
     ])
   } catch (error) {
     console.error('Failed to load homepage data:', error)

@@ -190,10 +190,12 @@
                 @click="handleRegister"
                 :class="isUserRegistered 
                   ? 'w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 font-bold rounded-lg flex items-center justify-center gap-2 transition-all hover:scale-105' 
-                  : 'w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-900 py-4 font-bold rounded-lg flex items-center justify-center gap-2 transition-all hover:scale-105'"
+                  : isWaitingListRegistration
+                    ? 'w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white py-4 font-bold rounded-lg flex items-center justify-center gap-2 transition-all hover:scale-105'
+                    : 'w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-900 py-4 font-bold rounded-lg flex items-center justify-center gap-2 transition-all hover:scale-105'"
               >
                 <CheckCircle :size="20" />
-                {{ isUserRegistered ? 'Registered!' : 'Register Now' }}
+                {{ isUserRegistered ? 'Registered!' : (isWaitingListRegistration ? 'Join Waiting List' : 'Register Now') }}
               </button>
               <button
                 v-else
@@ -202,6 +204,26 @@
               >
                 {{ statusText }}
               </button>
+              
+              <!-- See Tables Button -->
+              <router-link
+                :to="`/tournament/${id}/tables`"
+                class="w-full mt-3 bg-slate-700 hover:bg-slate-600 text-white py-3 font-bold rounded-lg flex items-center justify-center gap-2 transition-all hover:scale-105"
+              >
+                <LayoutGrid :size="20" />
+                See Tables
+              </router-link>
+              
+              <!-- Waiting List Info -->
+              <div v-if="isWaitingListRegistration && !isUserRegistered" class="mt-4 p-3 bg-orange-500/20 border border-orange-500/30 rounded-lg">
+                <p class="text-sm text-orange-300 flex items-center gap-2">
+                  <span>⏱</span>
+                  <span>Tournament is full. You'll be added to the waiting list and notified if a seat becomes available.</span>
+                </p>
+                <p v-if="tournament?.waiting_list_count > 0" class="text-xs text-orange-400 mt-2">
+                  {{ tournament.waiting_list_count }} {{ tournament.waiting_list_count === 1 ? 'person' : 'people' }} currently waiting
+                </p>
+              </div>
             </div>
 
             <!-- Registration Timeline -->
@@ -360,7 +382,7 @@ import { useTournamentsStore } from '../stores/tournaments'
 import LoadingSpinner from '../components/LoadingSpinner.vue'
 import {
   Trophy, Calendar, MapPin, Sparkles, Star, CheckCircle, Info, TrendingUp,
-  ChevronDown, Phone, Mail, AlertCircle, ArrowLeft, Clock
+  ChevronDown, Phone, Mail, AlertCircle, ArrowLeft, Clock, LayoutGrid
 } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -442,8 +464,23 @@ const canRegister = computed(() => {
   // If user is already registered, can't register again
   if (isUserRegistered.value) return false
   
-  return tournament.value?.registration_status === 'open' || 
-         tournament.value?.registration_status === 'closing_soon'
+  // If registration is open or closing soon, allow registration
+  if (tournament.value?.registration_status === 'open' || 
+      tournament.value?.registration_status === 'closing_soon') {
+    return true
+  }
+  
+  // If tournament is full, allow registration only if waiting list is enabled
+  if (tournament.value?.registration_status === 'full') {
+    return tournament.value?.waiting_list_enabled === true
+  }
+  
+  return false
+})
+
+const isWaitingListRegistration = computed(() => {
+  return tournament.value?.registration_status === 'full' && 
+         tournament.value?.waiting_list_enabled === true
 })
 
 const handleRegister = () => {

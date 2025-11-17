@@ -82,12 +82,17 @@
               <button
                 type="submit"
                 :disabled="!canSubmit || isSubmitting"
-                class="w-full btn-primary py-4 text-lg font-bold flex items-center justify-center gap-2"
-                :class="{ 'opacity-50 cursor-not-allowed': !canSubmit || isSubmitting }"
+                class="w-full py-4 text-lg font-bold flex items-center justify-center gap-2"
+                :class="[
+                  isWaitingListRegistration 
+                    ? 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white'
+                    : 'btn-primary',
+                  { 'opacity-50 cursor-not-allowed': !canSubmit || isSubmitting }
+                ]"
               >
                 <Loader v-if="isSubmitting" :size="24" class="animate-spin" />
                 <CheckCircle v-else :size="24" />
-                <span>{{ isSubmitting ? 'Processing...' : 'Complete Registration' }}</span>
+                <span>{{ isSubmitting ? 'Processing...' : (isWaitingListRegistration ? 'Join Waiting List' : 'Complete Registration') }}</span>
               </button>
             </form>
           </div>
@@ -169,6 +174,20 @@
               <div class="progress-fill bg-emerald-500" :style="{ width: `${fillPercentage}%` }"></div>
             </div>
           </div>
+
+          <!-- Waiting List Info -->
+          <div v-if="isWaitingListRegistration" class="card p-6 bg-orange-900/20 border border-orange-700/30">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="text-2xl">⏱</span>
+              <h3 class="text-lg font-bold text-orange-300">Waiting List Registration</h3>
+            </div>
+            <p class="text-sm text-orange-200 mb-3">
+              This tournament is currently full. By registering, you'll be added to the waiting list and will be notified if a seat becomes available.
+            </p>
+            <div v-if="tournament.waiting_list_count > 0" class="text-xs text-orange-300">
+              <strong>{{ tournament.waiting_list_count }}</strong> {{ tournament.waiting_list_count === 1 ? 'person' : 'people' }} currently on the waiting list
+            </div>
+          </div>
         </div>
       </div>
 
@@ -229,6 +248,11 @@ const availableSeats = computed(() => {
   return Math.max(0, tournament.value.total_seats - (tournament.value.occupied_seats || 0))
 })
 
+const isWaitingListRegistration = computed(() => {
+  return tournament.value?.registration_status === 'full' && 
+         tournament.value?.waiting_list_enabled === true
+})
+
 const fillPercentage = computed(() => {
   if (!tournament.value) return 0
   const occupied = tournament.value.occupied_seats || 0
@@ -267,11 +291,16 @@ const handleSubmit = async () => {
       tournament_id: tournament.value.id
     })
 
-    successMessage.value = 'Registration successful! Redirecting...'
+    // Check if user was added to waiting list
+    if (response.data.status === 'waiting') {
+      successMessage.value = `You've been added to the waiting list at position ${response.data.waiting_position || ''}! You'll be notified if a seat becomes available. Redirecting...`
+    } else {
+      successMessage.value = 'Registration successful! Redirecting...'
+    }
 
     setTimeout(() => {
       router.push(`/my-tournaments`)
-    }, 2000)
+    }, 3000)
   } catch (error) {
     console.error('Registration failed:', error)
     errorMessage.value = error.response?.data?.message || 'Registration failed. Please try again.'

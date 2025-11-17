@@ -292,6 +292,221 @@ class RegistrationController extends Controller
     }
 
     /**
+     * Update seat assignment (admin only)
+     */
+    public function updateSeat(Request $request, $id): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'table_number' => 'required|integer|min:1',
+            'seat_number' => 'required|integer|min:1',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            $registration = Registration::findOrFail($id);
+            $tournament = $registration->tournament;
+
+            // Validate table and seat numbers
+            if ($request->table_number > $tournament->total_tables) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid table number',
+                ], 400);
+            }
+
+            if ($request->seat_number > $tournament->seats_per_table) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid seat number',
+                ], 400);
+            }
+
+            // Check if the target seat is already occupied
+            $existingSeat = Registration::where('tournament_id', $tournament->id)
+                ->where('table_number', $request->table_number)
+                ->where('seat_number', $request->seat_number)
+                ->whereIn('status', ['registered', 'checked_in'])
+                ->where('id', '!=', $id)
+                ->first();
+
+            if ($existingSeat) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Seat is already occupied',
+                ], 400);
+            }
+
+            // Update the seat assignment
+            $registration->table_number = $request->table_number;
+            $registration->seat_number = $request->seat_number;
+            $registration->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Seat assignment updated successfully',
+                'registration' => [
+                    'id' => $registration->id,
+                    'table_number' => $registration->table_number,
+                    'seat_number' => $registration->seat_number,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
+     * Update registration status (admin only)
+     */
+    public function updateStatus(Request $request, $id): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'status' => 'required|in:registered,checked_in,cancelled,waiting',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            $registration = Registration::findOrFail($id);
+            $oldStatus = $registration->status;
+            $tournament = $registration->tournament;
+            
+            // If moving to waiting list, clear seat assignment and set waiting position
+            if ($request->status === 'waiting') {
+                // Get the next waiting position
+                $maxWaitingPosition = Registration::where('tournament_id', $tournament->id)
+                    ->where('status', 'waiting')
+                    ->max('waiting_position') ?? 0;
+                
+                $registration->table_number = null;
+                $registration->seat_number = null;
+                $registration->waiting_position = $maxWaitingPosition + 1;
+            } else {
+                // If moving from waiting to another status, clear waiting position
+                if ($oldStatus === 'waiting') {
+                    $registration->waiting_position = null;
+                }
+            }
+            
+            $registration->status = $request->status;
+            $registration->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Status updated successfully',
+                'registration' => [
+                    'id' => $registration->id,
+                    'status' => $registration->status,
+                    'old_status' => $oldStatus,
+                    'waiting_position' => $registration->waiting_position,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
+     * Move player from waiting list to a seat
+     */
+    public function moveFromWaitingList(Request $request, $id): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'table_number' => 'required|integer|min:1',
+            'seat_number' => 'required|integer|min:1',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            $registration = Registration::findOrFail($id);
+            $tournament = $registration->tournament;
+
+            // Validate that the registration is in waiting status
+            if ($registration->status !== 'waiting') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Player is not in waiting list',
+                ], 400);
+            }
+
+            // Validate table and seat numbers
+            if ($request->table_number > $tournament->total_tables) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid table number',
+                ], 400);
+            }
+
+            if ($request->seat_number > $tournament->seats_per_table) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid seat number',
+                ], 400);
+            }
+
+            // Check if the target seat is already occupied
+            $existingSeat = Registration::where('tournament_id', $tournament->id)
+                ->where('table_number', $request->table_number)
+                ->where('seat_number', $request->seat_number)
+                ->whereIn('status', ['registered', 'checked_in'])
+                ->first();
+
+            if ($existingSeat) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Seat is already occupied',
+                ], 400);
+            }
+
+            // Move player to seat and change status to registered
+            $registration->table_number = $request->table_number;
+            $registration->seat_number = $request->seat_number;
+            $registration->status = 'registered';
+            $registration->waiting_position = null;
+            $registration->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Player moved from waiting list to seat successfully',
+                'registration' => [
+                    'id' => $registration->id,
+                    'table_number' => $registration->table_number,
+                    'seat_number' => $registration->seat_number,
+                    'status' => $registration->status,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
      * Get waiting list for tournament
      */
     public function waitingList(Request $request): JsonResponse

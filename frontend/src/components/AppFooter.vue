@@ -23,29 +23,23 @@
           <h4 class="text-white font-bold mb-4">Quick Links</h4>
           <ul class="space-y-2">
             <li>
-              <router-link to="/" class="text-slate-400 hover:text-emerald-400 text-sm transition-colors">
-                Home
+              <router-link to="/about" class="text-slate-400 hover:text-emerald-400 text-sm transition-colors">
+                About
               </router-link>
             </li>
             <li>
               <router-link to="/tournaments" class="text-slate-400 hover:text-emerald-400 text-sm transition-colors">
-                Browse Tournaments
+                Tournaments
               </router-link>
             </li>
             <li>
-              <router-link v-if="!authStore.isLoggedIn" to="/register" class="text-slate-400 hover:text-emerald-400 text-sm transition-colors">
-                Create Account
-              </router-link>
-              <router-link v-else to="/my-tournaments" class="text-slate-400 hover:text-emerald-400 text-sm transition-colors">
-                My Tournaments
+              <router-link to="/cash-games" class="text-slate-400 hover:text-emerald-400 text-sm transition-colors">
+                Cash Games
               </router-link>
             </li>
             <li>
-              <router-link v-if="authStore.isLoggedIn" to="/profile" class="text-slate-400 hover:text-emerald-400 text-sm transition-colors">
-                My Profile
-              </router-link>
-              <router-link v-else to="/login" class="text-slate-400 hover:text-emerald-400 text-sm transition-colors">
-                Login
+              <router-link to="/contact" class="text-slate-400 hover:text-emerald-400 text-sm transition-colors">
+                Contact
               </router-link>
             </li>
           </ul>

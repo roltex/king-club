@@ -29,6 +29,8 @@ class TournamentResource extends Resource
     protected static ?string $modelLabel = 'Tournament';
     
     protected static ?int $navigationSort = 1;
+    
+    protected static ?string $navigationGroup = 'Tournament Management';
 
     public static function form(Form $form): Form
     {
@@ -743,9 +745,15 @@ class TournamentResource extends Resource
                 Tables\Filters\Filter::make('upcoming')
                     ->label('Upcoming Only')
                     ->query(fn (Builder $query): Builder => $query->where('start_date', '>', now())),
+                
+                Tables\Filters\Filter::make('active')
+                    ->label('Active Tournaments')
+                    ->query(fn (Builder $query): Builder => $query->whereIn('status', ['registration_open', 'in_progress'])),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->label('View Details')
+                    ->icon('heroicon-o-eye'),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
                 Tables\Actions\Action::make('view_registrations')
@@ -786,6 +794,7 @@ class TournamentResource extends Resource
         return [
             'index' => Pages\ListTournaments::route('/'),
             'create' => Pages\CreateTournament::route('/create'),
+            'view' => Pages\ViewTournament::route('/{record}'),
             'edit' => Pages\EditTournament::route('/{record}/edit'),
         ];
     }

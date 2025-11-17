@@ -56,6 +56,10 @@ class AdminPanelProvider extends PanelProvider
             ->brandName('Poker Tournament')
             ->favicon(asset('favicon.ico'))
             ->darkMode(true)
-            ->sidebarCollapsibleOnDesktop();
+            ->sidebarCollapsibleOnDesktop()
+            ->renderHook(
+                'panels::body.end',
+                fn () => view('filament.pages.cash-game-styles')
+            );
     }
 }

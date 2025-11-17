@@ -1,0 +1,19 @@
+[phases.setup]
+nixPkgs = ["php82", "composer", "sqlite"]
+
+[phases.install]
+cmds = [
+  "composer install --optimize-autoloader --no-dev"
+]
+
+[phases.build]
+cmds = [
+  "php artisan config:cache",
+  "php artisan route:cache",
+  "php artisan view:cache",
+  "touch database/database.sqlite || true"
+]
+
+[start]
+cmd = "php artisan serve --host=0.0.0.0 --port=$PORT"
+

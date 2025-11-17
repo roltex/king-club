@@ -1,6 +1,6 @@
-# 🚂 Railway Deployment Guide
+# 🚂 Railway Deployment Guide - Backend & Frontend with SQLite
 
-This guide will help you deploy the Poker Tournament Management System to Railway.
+This guide will help you deploy both the backend and frontend of the Poker Tournament Management System to Railway using SQLite.
 
 ## Prerequisites
 
@@ -8,62 +8,54 @@ This guide will help you deploy the Poker Tournament Management System to Railwa
 2. **GitHub Repository**: Your code should be pushed to GitHub (already done ✅)
 3. **Railway CLI** (optional): For easier management
 
-## Deployment Steps
-
-### Step 1: Create New Project on Railway
+## Quick Start
 
 1. Go to [railway.app](https://railway.app) and sign in
-2. Click **"New Project"**
-3. Select **"Deploy from GitHub repo"**
-4. Choose your repository: `roltex/king-club`
-5. Railway will automatically detect the project
+2. Click **"New Project"** → **"Deploy from GitHub repo"**
+3. Select repository: `roltex/king-club`
+4. Railway will detect the project structure
+5. Create **TWO services**: Backend and Frontend
+6. Configure each service as described below
+
+## Step-by-Step Deployment
+
+### Step 1: Create Backend Service
+
+1. In Railway project, click **"+ New"** → **"GitHub Repo"**
+2. Select `roltex/king-club`
+3. **Service Name**: `backend` or `api`
+4. **Root Directory**: `backend`
+5. Railway will auto-detect PHP/Laravel
 
 ### Step 2: Configure Backend Service
 
-Railway will create a service for your backend. Configure it:
+#### Service Settings:
+- **Root Directory**: `backend`
+- **Build Command**: (Auto-detected from `backend/nixpacks.toml`)
+- **Start Command**: (Auto-detected from `backend/nixpacks.toml`)
 
-1. **Service Name**: `backend` (or `api`)
-2. **Root Directory**: Set to `backend/`
-3. **Build Command**: 
-   ```bash
-   composer install --optimize-autoloader --no-dev
-   ```
-4. **Start Command**:
-   ```bash
-   php artisan serve --host=0.0.0.0 --port=$PORT
-   ```
+#### Environment Variables:
 
-### Step 3: Set Environment Variables
-
-In Railway dashboard, go to your service → **Variables** tab and add:
-
-#### Required Backend Variables
+Go to Backend Service → **Variables** tab and add:
 
 ```env
 APP_NAME="Kings Club"
 APP_ENV=production
-APP_KEY=base64:YOUR_GENERATED_KEY_HERE
+APP_KEY=
 APP_DEBUG=false
-APP_URL=https://your-backend.railway.app
+APP_URL=https://your-backend-service.railway.app
 
-# Database (Railway provides PostgreSQL by default)
-DB_CONNECTION=pgsql
-DB_HOST=${{Postgres.PGHOST}}
-DB_PORT=${{Postgres.PGPORT}}
-DB_DATABASE=${{Postgres.PGDATABASE}}
-DB_USERNAME=${{Postgres.PGUSER}}
-DB_PASSWORD=${{Postgres.PGPASSWORD}}
+# SQLite Database Configuration
+DB_CONNECTION=sqlite
+DB_DATABASE=/app/database/database.sqlite
 
-# Or use SQLite (simpler, but less scalable)
-# DB_CONNECTION=sqlite
-# DB_DATABASE=/app/database/database.sqlite
-
-# Cache
+# Cache & Session
 CACHE_DRIVER=file
 SESSION_DRIVER=file
+FILESYSTEM_DISK=local
 
 # Frontend URL (update after deploying frontend)
-FRONTEND_URL=https://your-frontend.railway.app
+FRONTEND_URL=https://your-frontend-service.railway.app
 
 # Mail Configuration (optional)
 MAIL_MAILER=smtp
@@ -75,151 +67,195 @@ MAIL_FROM_ADDRESS=noreply@kingsclub.ge
 MAIL_FROM_NAME="Kings Club"
 ```
 
-#### Generate APP_KEY
+#### Generate APP_KEY:
 
-In Railway service terminal, run:
+After first deployment, in Railway service terminal:
 ```bash
-php artisan key:generate
+railway run php artisan key:generate --show
 ```
 
-Or generate locally and add to Railway:
+Copy the key and add it to `APP_KEY` in Railway variables.
+
+Or use Railway CLI:
 ```bash
-php artisan key:generate --show
+railway run --service backend php artisan key:generate --show
 ```
 
-### Step 4: Add PostgreSQL Database (Recommended)
+### Step 3: Run Backend Migrations
 
-1. In Railway dashboard, click **"+ New"** → **"Database"** → **"Add PostgreSQL"**
-2. Railway will automatically provide connection variables
-3. Use the variables in your backend service (as shown above)
+After setting `APP_KEY`, run migrations:
 
-### Step 5: Run Migrations
+**Option A: Railway Dashboard**
+1. Go to Backend Service → **Deployments** → Latest deployment
+2. Click **"View Logs"** → **"Shell"**
+3. Run: `php artisan migrate --force`
 
-1. In Railway service, go to **"Deployments"** tab
-2. Click on the latest deployment
-3. Open **"View Logs"** or use **"Deploy Logs"**
-4. Or use Railway CLI:
-   ```bash
-   railway run php artisan migrate --force
-   ```
-
-### Step 6: Create Admin User
-
+**Option B: Railway CLI**
 ```bash
-railway run php artisan make:filament-user
+railway run --service backend php artisan migrate --force
 ```
 
-Or manually create via tinker:
+### Step 4: Create Admin User
+
 ```bash
-railway run php artisan tinker
+railway run --service backend php artisan make:filament-user
 ```
 
-### Step 7: Deploy Frontend (Separate Service)
+### Step 5: Create Frontend Service
 
-#### Option A: Deploy Frontend as Static Site
+1. In same Railway project, click **"+ New"** → **"GitHub Repo"**
+2. Select `roltex/king-club` again
+3. **Service Name**: `frontend`
+4. **Root Directory**: `frontend`
+5. Railway will auto-detect Node.js
 
-1. **Build Frontend Locally**:
-   ```bash
-   cd frontend
-   npm install
-   npm run build
-   ```
+### Step 6: Configure Frontend Service
 
-2. **Create New Service** in Railway:
-   - Service Name: `frontend`
-   - Root Directory: `frontend/`
-   - Build Command: `npm install && npm run build`
-   - Start Command: Use a static file server or Railway's static site option
+#### Service Settings:
+- **Root Directory**: `frontend`
+- **Build Command**: (Auto-detected from `frontend/nixpacks.toml`)
+- **Start Command**: (Auto-detected from `frontend/nixpacks.toml`)
 
-3. **Set Environment Variables**:
-   ```env
-   VITE_API_BASE_URL=https://your-backend.railway.app
-   VITE_APP_NAME="Kings Club"
-   ```
+#### Environment Variables:
 
-#### Option B: Use Railway Static Site
+Go to Frontend Service → **Variables** tab and add:
 
-1. Create new service → **"Static Site"**
-2. Root Directory: `frontend/`
-3. Build Command: `npm install && npm run build`
-4. Output Directory: `frontend/dist`
+```env
+VITE_API_BASE_URL=https://your-backend-service.railway.app
+VITE_APP_NAME="Kings Club"
+VITE_TOURNAMENT_SEATS=54
+VITE_TOURNAMENT_TABLES=6
+VITE_SEATS_PER_TABLE=9
+```
 
-#### Option C: Deploy Frontend Separately (Vercel/Netlify)
+**Important**: Replace `your-backend-service.railway.app` with your actual backend Railway URL.
 
-1. Push frontend to separate repo or use monorepo
-2. Deploy to Vercel/Netlify
-3. Set `VITE_API_BASE_URL` to your Railway backend URL
+### Step 7: Update Backend CORS
 
-### Step 8: Update CORS Configuration
+After frontend is deployed, update backend CORS:
 
-In `backend/config/cors.php`, ensure your frontend URL is allowed:
+1. Go to Backend Service → **Variables**
+2. Update `FRONTEND_URL` with your frontend Railway URL
+3. Or manually edit `backend/config/cors.php`:
 
 ```php
 'allowed_origins' => [
-    'https://your-frontend.railway.app',
-    'https://your-frontend.vercel.app', // if using Vercel
+    'https://your-frontend-service.railway.app',
 ],
 ```
 
-### Step 9: Configure Storage
+### Step 8: Configure Custom Domains (Optional)
 
-For file uploads (tournament images), configure storage:
+1. **Backend Domain**:
+   - Backend Service → **Settings** → **Domains** → **"Generate Domain"**
+   - Copy the domain (e.g., `backend-production.up.railway.app`)
+   - Update `APP_URL` in backend variables
 
-1. **Option A: Railway Volume** (Recommended)
-   - Add volume in Railway dashboard
-   - Mount to `/app/storage/app/public`
-   - Update `FILESYSTEM_DISK=local` in env
+2. **Frontend Domain**:
+   - Frontend Service → **Settings** → **Domains** → **"Generate Domain"**
+   - Copy the domain (e.g., `frontend-production.up.railway.app`)
+   - Update `VITE_API_BASE_URL` in frontend variables with backend domain
+   - Update `FRONTEND_URL` in backend variables with frontend domain
 
-2. **Option B: S3/Cloud Storage**
-   - Use AWS S3, Cloudflare R2, or similar
-   - Update `FILESYSTEM_DISK=s3` in env
-   - Add AWS credentials
+3. **Custom Domain** (if you have one):
+   - Add your custom domain in Railway
+   - Railway provides SSL automatically
 
-### Step 10: Set Up Custom Domain (Optional)
+## SQLite Database Persistence
 
-1. In Railway service → **Settings** → **Domains**
-2. Add your custom domain
-3. Update `APP_URL` and `FRONTEND_URL` accordingly
+**Important**: SQLite database file needs to persist between deployments.
+
+### Option A: Railway Volume (Recommended)
+
+1. In Backend Service → **Settings** → **Volumes**
+2. Click **"Add Volume"**
+3. Mount path: `/app/database`
+4. This ensures `database.sqlite` persists
+
+### Option B: Ephemeral Storage (Default)
+
+- Database will reset on each deployment
+- Fine for development/testing
+- Not recommended for production
 
 ## Post-Deployment Checklist
 
-- [ ] Backend service is running
-- [ ] Database migrations completed
+### Backend
+- [ ] Service is running and healthy
+- [ ] `APP_KEY` is set
+- [ ] Migrations completed successfully
 - [ ] Admin user created
-- [ ] Environment variables set
-- [ ] CORS configured correctly
-- [ ] Frontend deployed and connected to backend
-- [ ] Storage configured for file uploads
+- [ ] Database file exists (`database/database.sqlite`)
+- [ ] CORS configured with frontend URL
 - [ ] Custom domain configured (if applicable)
-- [ ] SSL certificate active (Railway provides automatically)
+
+### Frontend
+- [ ] Service is running and healthy
+- [ ] Build completed successfully
+- [ ] `VITE_API_BASE_URL` points to backend URL
+- [ ] Frontend can connect to backend API
+- [ ] Custom domain configured (if applicable)
+
+### Integration
+- [ ] Frontend can make API calls to backend
+- [ ] Authentication works
+- [ ] CORS errors resolved
+- [ ] Images/assets load correctly
 
 ## Troubleshooting
 
-### Backend Not Starting
+### Backend Issues
 
-1. Check logs in Railway dashboard
-2. Verify `APP_KEY` is set
-3. Check database connection
-4. Ensure `$PORT` is used in start command
+#### Service Won't Start
+- Check logs: Backend Service → **Deployments** → **View Logs**
+- Verify `APP_KEY` is set
+- Check database file permissions
+- Ensure `$PORT` is used in start command
 
-### Database Connection Issues
+#### Database Connection Error
+- Verify `DB_CONNECTION=sqlite` is set
+- Check `database/database.sqlite` file exists
+- Ensure volume is mounted (if using volumes)
+- Check file permissions: `chmod 664 database/database.sqlite`
 
-1. Verify PostgreSQL service is running
-2. Check environment variables match Railway's provided values
-3. Test connection: `railway run php artisan tinker`
+#### Migration Errors
+```bash
+railway run --service backend php artisan migrate:fresh --force
+```
 
-### Frontend Can't Connect to Backend
+### Frontend Issues
 
-1. Verify `VITE_API_BASE_URL` is correct
-2. Check CORS configuration
-3. Ensure backend URL is accessible
-4. Check browser console for errors
+#### Build Fails
+- Check Node.js version (should be 20+)
+- Verify all dependencies in `package.json`
+- Check build logs for specific errors
 
-### File Upload Issues
+#### Can't Connect to Backend
+- Verify `VITE_API_BASE_URL` is correct
+- Check backend CORS configuration
+- Ensure backend URL is accessible
+- Check browser console for CORS errors
 
-1. Verify storage directory is writable
-2. Check volume mount (if using Railway volume)
-3. Update `FILESYSTEM_DISK` configuration
+#### 404 Errors on Routes
+- Ensure `serve` package is installed
+- Check `dist/` folder exists after build
+- Verify start command uses `serve -s dist`
+
+### Integration Issues
+
+#### CORS Errors
+1. Update `FRONTEND_URL` in backend variables
+2. Clear backend config cache:
+   ```bash
+   railway run --service backend php artisan config:clear
+   ```
+3. Redeploy backend service
+
+#### Authentication Not Working
+- Verify API base URL in frontend
+- Check backend authentication endpoints
+- Verify Sanctum configuration
+- Check browser network tab for errors
 
 ## Railway CLI Commands
 
@@ -234,36 +270,57 @@ railway login
 railway link
 
 # View logs
-railway logs
+railway logs --service backend
+railway logs --service frontend
 
 # Run commands
-railway run php artisan migrate
-railway run php artisan tinker
+railway run --service backend php artisan migrate
+railway run --service backend php artisan tinker
+railway run --service backend php artisan make:filament-user
 
-# Open service
-railway open
+# Open services
+railway open --service backend
+railway open --service frontend
 ```
 
 ## Environment Variables Reference
 
-### Backend (.env)
-- `APP_KEY` - Laravel encryption key
-- `APP_URL` - Backend URL
-- `DB_*` - Database connection
-- `FRONTEND_URL` - Frontend URL for CORS
-- `CACHE_DRIVER` - Cache driver (file/redis)
-- `SESSION_DRIVER` - Session driver
+### Backend Variables
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `APP_KEY` | Laravel encryption key | `base64:...` |
+| `APP_URL` | Backend URL | `https://backend.railway.app` |
+| `DB_CONNECTION` | Database type | `sqlite` |
+| `DB_DATABASE` | SQLite file path | `/app/database/database.sqlite` |
+| `FRONTEND_URL` | Frontend URL for CORS | `https://frontend.railway.app` |
+| `CACHE_DRIVER` | Cache driver | `file` |
+| `SESSION_DRIVER` | Session driver | `file` |
 
-### Frontend (.env)
-- `VITE_API_BASE_URL` - Backend API URL
-- `VITE_APP_NAME` - Application name
+### Frontend Variables
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `VITE_API_BASE_URL` | Backend API URL | `https://backend.railway.app` |
+| `VITE_APP_NAME` | Application name | `Kings Club` |
+| `VITE_TOURNAMENT_SEATS` | Total tournament seats | `54` |
+| `VITE_TOURNAMENT_TABLES` | Total tables | `6` |
+| `VITE_SEATS_PER_TABLE` | Seats per table | `9` |
 
 ## Cost Optimization
 
-- **Free Tier**: Railway offers free tier with limited resources
-- **Database**: PostgreSQL is included, SQLite is free
-- **Storage**: Use Railway volumes for file storage
+- **Free Tier**: Railway offers free tier with $5 credit/month
+- **SQLite**: Free (no database service needed)
+- **Storage**: Railway volumes are included in free tier
 - **Scaling**: Railway auto-scales based on traffic
+
+## Production Recommendations
+
+1. **Use PostgreSQL** for production (more reliable than SQLite)
+2. **Enable Redis** for caching and sessions
+3. **Set up backups** for database
+4. **Monitor logs** regularly
+5. **Set up alerts** for service failures
+6. **Use custom domains** with SSL
+7. **Configure CDN** for frontend assets
 
 ## Support
 
@@ -274,4 +331,3 @@ railway open
 ---
 
 **Happy Deploying! 🚀**
-

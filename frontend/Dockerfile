@@ -13,6 +13,8 @@ RUN npm ci || npm install
 COPY . .
 
 # Build the application
+# Railway automatically injects VITE_* env vars during build
+# Make sure VITE_API_BASE_URL is set in Railway Variables
 RUN npm run build
 
 # Install serve globally for production

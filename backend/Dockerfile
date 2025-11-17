@@ -42,11 +42,10 @@ COPY . .
 # Run post-install scripts now that artisan exists
 RUN composer dump-autoload --optimize --no-interaction
 
-# Create database file if it doesn't exist
-RUN touch database/database.sqlite || true
-
-# Set proper permissions for database
-RUN chmod 664 database/database.sqlite || true
+# Create database directory and file
+RUN mkdir -p database && \
+    touch database/database.sqlite && \
+    chmod 664 database/database.sqlite
 
 # Cache configuration (only if .env exists, otherwise skip)
 RUN php artisan config:cache || true && \

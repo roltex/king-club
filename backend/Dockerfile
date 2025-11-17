@@ -42,6 +42,9 @@ COPY . .
 # Run post-install scripts now that artisan exists
 RUN composer dump-autoload --optimize --no-interaction
 
+# Publish Filament assets during build
+RUN php artisan filament:assets || true
+
 # Create database directory and file
 RUN mkdir -p database && \
     touch database/database.sqlite && \
@@ -58,10 +61,16 @@ cd /app\n\
 php artisan config:clear || true\n\
 php artisan route:clear || true\n\
 php artisan view:clear || true\n\
+# Publish Filament assets\n\
+php artisan filament:assets || true\n\
+# Create storage link\n\
+php artisan storage:link || true\n\
 # Ensure database exists\n\
 mkdir -p database\n\
 touch database/database.sqlite\n\
 chmod 664 database/database.sqlite\n\
+# Set proper permissions for storage\n\
+chmod -R 775 storage bootstrap/cache || true\n\
 # Cache config with correct values from environment\n\
 php artisan config:cache\n\
 php artisan route:cache\n\

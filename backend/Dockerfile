@@ -30,14 +30,17 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /app
 
-# Copy composer files
+# Copy composer files first
 COPY composer.json composer.lock ./
 
-# Install PHP dependencies
-RUN composer install --optimize-autoloader --no-dev --no-interaction
+# Install PHP dependencies (skip scripts that require artisan)
+RUN composer install --optimize-autoloader --no-dev --no-interaction --no-scripts
 
 # Copy application files
 COPY . .
+
+# Run post-install scripts now that artisan exists
+RUN composer dump-autoload --optimize --no-interaction
 
 # Create database file if it doesn't exist
 RUN touch database/database.sqlite || true

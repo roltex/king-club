@@ -307,7 +307,22 @@ GET    /api/waiting-list         # Get waiting list
 
 ## 🚀 Production Deployment
 
-### Backend
+### Railway Deployment (Recommended)
+
+This project is configured for easy deployment on Railway. See the complete guide in [RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md).
+
+**Quick Start:**
+1. Push code to GitHub (already done ✅)
+2. Go to [railway.app](https://railway.app) and create a new project
+3. Connect your GitHub repository: `roltex/king-club`
+4. Railway will auto-detect and deploy your backend
+5. Add PostgreSQL database service
+6. Set environment variables (see RAILWAY_DEPLOYMENT.md)
+7. Deploy frontend as separate service or use Vercel/Netlify
+
+### Manual Production Build
+
+#### Backend
 ```bash
 # Build for production
 composer install --optimize-autoloader --no-dev
@@ -316,7 +331,7 @@ php artisan route:cache
 php artisan view:cache
 ```
 
-### Frontend
+#### Frontend
 ```bash
 # Build for production
 npm run build
